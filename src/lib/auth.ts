@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 import { rateLimit } from "@/lib/rate-limit";
 
 // Throttle login attempts per IP+email pair so brute-forcing a single
@@ -79,17 +80,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role: string }).role;
+        token.role = (user as { role: Role }).role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as DefaultSession["user"] & { id: string; role: string }).id =
+      (session.user as DefaultSession["user"] & { id: string; role: Role }).id =
   token.id as string;
-        (session.user as DefaultSession["user"] & { id: string; role: string }).role =
-  token.role as string;
-      }
+
+      (session.user as DefaultSession["user"] & { id: string; role: Role }).role =
+  token.role as Role;
       return session;
     },
   },
